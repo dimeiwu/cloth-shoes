@@ -176,6 +176,12 @@
     margin-top: 0;
     font-size: 1.2rem;
   }
+  .pricing-note {
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 0 0 18px;
+  }
   .field {
     margin-bottom: 16px;
   }
@@ -246,15 +252,38 @@
 
 <header>
   <h1>Canvas Cloth Shoes from Dimei!</h1>
-  <p>Browse the styles below, for the ones you'd like, set a size and a quantity, then fill in your info at the bottom. <br>
-    Female styles 1&ndash;23 are available in EU sizes 35&ndash;41. Male styles #24&ndash;31 are available in EU sizes 39&ndash;44. <br>
-    Comfy with and without socks. These are barefoot style, flat-soled, wide toe box for toe wiggling healthy feet!<br>
-    $25 per pair includes delivery (venmo @dimei or Zelle 858-761-5399 or cash), ~1 month delivery time. Dimei will hand deliver to you at work/temple/meet-up.
+  <p>Fill in your info below, then browse the styles further down, check the ones you'd like, and set a size and quantity for each. <br>
+    Female styles 1&ndash;23 are available in EU sizes 35&ndash;41. <br>
+    Male styles #24&ndash;31 are available in EU sizes 39&ndash;44. <br>
+    Comfy with and without socks. These are barefoot style, flat-soled, wide toe box for toe wiggling healthy feet!
   </p>
   <div class="divider"></div>
 </header>
 
 <main>
+  <div class="form-section">
+    <h2>Your Order</h2>
+    <p class="pricing-note">$25 per pair includes delivery (venmo @dimei or Zelle 858-761-5399 or cash), ~1 month delivery time. Dimei will hand deliver to you at work/temple/meet-up.</p>
+    <div class="summary" id="summary"><span class="empty">No styles selected yet — tap the shoes above to add them here.</span></div>
+
+    <form id="orderForm">
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required placeholder="Your full name">
+      </div>
+      <div class="field">
+        <label for="contact">Contact (phone, email, or WeChat)</label>
+        <input type="text" id="contact" name="contact" required placeholder="How should I reach you?">
+      </div>
+      <div class="field">
+        <label for="notes">Notes (sizes, colors, anything else)</label>
+        <textarea id="notes" name="notes" placeholder="I'll follow up about sizes, but feel free to add anything here"></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Order</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </form>
+  </div>
+
   <div class="grid" id="grid">
 <div class="card" id="card1">
         <div class="img-wrap">
@@ -1035,27 +1064,6 @@
 
   </div>
 
-  <div class="form-section">
-    <h2>Your Order</h2>
-    <div class="summary" id="summary"><span class="empty">No styles selected yet — tap the shoes above to add them here.</span></div>
-
-    <form id="orderForm">
-      <div class="field">
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" required placeholder="Your full name">
-      </div>
-      <div class="field">
-        <label for="contact">Contact (phone, email, or WeChat)</label>
-        <input type="text" id="contact" name="contact" required placeholder="How should I reach you?">
-      </div>
-      <div class="field">
-        <label for="notes">Notes (sizes, colors, anything else)</label>
-        <textarea id="notes" name="notes" placeholder="I'll follow up about sizes, but feel free to add anything here"></textarea>
-      </div>
-      <button type="submit" class="submit-btn" id="submitBtn">Submit Order</button>
-      <div class="status-msg" id="statusMsg"></div>
-    </form>
-  </div>
 </main>
 
 <footer>Thank you for supporting our canvas cloth shoes. Happy healthy walking!</footer>
@@ -1063,7 +1071,9 @@
 <script>
   // ---- CONFIGURE THIS ----
   // Paste your Google Apps Script Web App URL below (see Apps_Script_backend.gs for setup steps).
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxy1_52KgJ-uGFJqksFZFlaezlXNIUuN0aKTycf2IenogHlFEfixUE6pZCgxDFzn2X-rQ/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAy_JTSe4GkwoXwMBVTJkb-OwIM9fifr1cVsZpNdPaG7iNQAZCZV3-nCZ-jDm1Hyb5jQ/exec";
+  // Price per pair, in US dollars. Change this one number to update pricing everywhere on the page.
+  const UNIT_PRICE = 25;
   // -------------------------
 
   const grid = document.getElementById('grid');
@@ -1148,6 +1158,8 @@
     const notes = document.getElementById('notes').value.trim();
 
     const orderDetails = items.map(i => `Style #${i.style} - Size ${i.size} x${i.qty}`).join('; ');
+    const totalQty = items.reduce((sum, i) => sum + parseInt(i.qty || 1, 10), 0);
+    const totalPrice = totalQty * UNIT_PRICE;
 
     if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
       statusMsg.textContent = 'Form is not fully set up yet (missing backend URL) — order not sent. Please contact the shop directly.';
@@ -1158,14 +1170,14 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
-    const body = new URLSearchParams({ name, contact, orderDetails, notes });
+    const body = new URLSearchParams({ name, contact, orderDetails, notes, total: `$${totalPrice}` });
 
     fetch(SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       body: body
     }).then(() => {
-      statusMsg.textContent = 'Thank you! Your order has been submitted. I will be in touch confirming payment receipt, ship date, and delivery date.';
+      statusMsg.textContent = `Thank you! Your order has been submitted. Please pay $${totalPrice} via venmo @dimei, Zelle 858-761-5399, or cash. I will be in touch confirming payment receipt, ship date, and delivery date.`;
       statusMsg.className = 'status-msg success';
       form.reset();
       document.querySelectorAll('.chk').forEach(c => c.checked = false);
